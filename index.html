@@ -1458,4 +1458,279 @@ async function loadPending(){
             <b>De:</b>
             ${esc(x.from)}
           </div>
+
+          <div style="margin-top:8px">
+            ${esc(x.msg)}
+          </div>
+
+          <div
+            class="pending"
+            style="margin-top:8px"
+          >
+            ⏳ Pendiente de aprobación
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="primary"
+              onclick="approve('${esc(x.id)}')"
+            >
+              ✅ Aprobar
+            </button>
+
+            <button
+              class="light"
+              onclick="reject('${esc(x.id)}')"
+            >
+              ❌ Rechazar
+            </button>
+
+          </div>
+
+        </div>
+
+      `).join('');
+
+
+  }catch(err){
+
+    console.error(
+      'Error cargando pendientes:',
+      err
+    );
+
+
+    $('pendingCount').style.display =
+      'none';
+
+
+    container.innerHTML = `
+
+      <div class="empty">
+
+        <strong>
+          ⚠️ No fue posible consultar
+          las publicaciones pendientes.
+        </strong>
+
+        <br><br>
+
+        <span class="small">
+          ${esc(err.message)}
+        </span>
+
+      </div>
+
+    `;
+
+
+    showAdminMessage(
+      'No se pudieron consultar las tarjetas pendientes. Revisa las políticas de Supabase (RLS).',
+      'error'
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   APROBAR
+========================================================= */
+
+window.approve = async function(id){
+
+  if(!confirm(
+    '¿Quieres aprobar esta tarjeta y publicarla en La Cartelera que Suma?'
+  )) return;
+
+
+  try{
+
+    await api(
+
+      `?id=eq.${encodeURIComponent(id)}`,
+
+      {
+
+        method:'PATCH',
+
+        headers:{
+          'Content-Type':'application/json'
+        },
+
+        body:JSON.stringify({
+          estado:'aprobada'
+        })
+
+      }
+
+    );
+
+
+    showAdminMessage(
+      '✅ Tarjeta aprobada y publicada correctamente.'
+    );
+
+
+    await renderWall();
+
+    await loadPending();
+
+
+  }catch(err){
+
+    console.error(err);
+
+    showAdminMessage(
+      'No se pudo aprobar la tarjeta: ' +
+      err.message,
+      'error'
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   RECHAZAR
+========================================================= */
+
+window.reject = async function(id){
+
+  if(!confirm(
+    '¿Quieres rechazar esta tarjeta?'
+  )) return;
+
+
+  try{
+
+    await api(
+
+      `?id=eq.${encodeURIComponent(id)}`,
+
+      {
+
+        method:'PATCH',
+
+        headers:{
+          'Content-Type':'application/json'
+        },
+
+        body:JSON.stringify({
+          estado:'rechazada'
+        })
+
+      }
+
+    );
+
+
+    showAdminMessage(
+      '✅ Tarjeta rechazada correctamente.'
+    );
+
+
+    await renderWall();
+
+    await loadPending();
+
+
+  }catch(err){
+
+    console.error(err);
+
+    showAdminMessage(
+      'No se pudo rechazar la tarjeta: ' +
+      err.message,
+      'error'
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   BOTÓN VER PENDIENTES
+========================================================= */
+
+$('adminToggle').onclick =
+  async () => {
+
+    await loadPending();
+
+    $('pending').scrollIntoView({
+      behavior:'smooth',
+      block:'center'
+    });
+
+  };
+
+
+/* =========================================================
+   ELIMINAR TODO
+========================================================= */
+
+$('clearAll').onclick =
+  async () => {
+
+    if(!confirm(
+      '¿Eliminar todas las tarjetas de la tabla? Esta acción no se puede deshacer.'
+    )) return;
+
+
+    try{
+
+      await api(
+        '',
+        {
+          method:'DELETE'
+        }
+      );
+
+
+      showAdminMessage(
+        'Todas las tarjetas fueron eliminadas.'
+      );
+
+
+      await renderWall();
+
+      await loadPending();
+
+
+    }catch(err){
+
+      console.error(err);
+
+      showAdminMessage(
+        'No se pudieron eliminar las tarjetas: ' +
+        err.message,
+        'error'
+      );
+
+    }
+
+  };
+
+
+/* =========================================================
+   INICIO
+========================================================= */
+
+renderTemplates();
+
+renderWall();
+
+loadPending();
+
+updateCount();
+
+</script>
+
+</body>
+</html>
 ```
