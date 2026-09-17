@@ -826,84 +826,75 @@
   ========================================================= */
 
   async function api(
-    path='',
-    options={},
-    requireAuth=false
-  ){
+     path='',
+  options={},
+  requireAuth=false
+){
 
-    let token =
-      requireAuth
-        ? getAccessToken()
-        : null;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    ...(options.headers || {})
+  };
 
-    const headers = {
+  if(requireAuth){
 
-      apikey:SUPABASE_KEY,
+    const token = getAccessToken();
 
-      Authorization:
-        `Bearer ${token || SUPABASE_KEY}`,
-
-      ...(options.headers || {})
-
-    };
-
-
-    if(options.body &&
-       !headers['Content-Type']){
-
-      headers['Content-Type'] =
-        'application/json';
-
+    if(!token){
+      throw new Error('No hay una sesión de administrador activa.');
     }
 
-
-    const res = await fetch(
-
-      `${SUPABASE_URL}/rest/v1/${TABLE}${path}`,
-
-      {
-        ...options,
-
-        headers
-
-      }
-
-    );
-
-
-    const text =
-      await res.text();
-
-
-    if(!res.ok){
-
-      throw new Error(
-        `Supabase ${res.status}: ${text || res.statusText}`
-      );
-
-    }
-
-
-    if(!text.trim()){
-
-      return null;
-
-    }
-
-
-    try{
-
-      return JSON.parse(text);
-
-    }catch{
-
-      return null;
-
-    }
+    headers.Authorization = `Bearer ${token}`;
 
   }
 
+  if(options.body &&
+     !headers['Content-Type']){
 
+    headers['Content-Type'] =
+      'application/json';
+
+  }
+
+  const res = await fetch(
+
+    `${SUPABASE_URL}/rest/v1/${TABLE}${path}`,
+
+    {
+      ...options,
+      headers
+    }
+
+  );
+
+  const text =
+    await res.text();
+
+  if(!res.ok){
+
+    throw new Error(
+      `Supabase ${res.status}: ${text || res.statusText}`
+    );
+
+  }
+
+  if(!text.trim()){
+
+    return null;
+
+  }
+
+  try{
+
+    return JSON.parse(text);
+
+  }catch{
+
+    return null;
+
+  }
+
+}
   /* =========================================================
      AUTH SUPABASE
   ========================================================= */
