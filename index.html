@@ -53,4 +53,3 @@ $('adminToggle').onclick=()=>{$('pending').scrollIntoView({behavior:'smooth',blo
 $('clearAll').onclick=async()=>{if(!confirm('¿Eliminar todas las tarjetas de la tabla? Esta acción no se puede deshacer.'))return;try{await api('',{method:'DELETE'});await render()}catch(err){showError('No se pudieron eliminar las tarjetas: '+err.message)}};
 renderTemplates();render();updateCount();
 </script></body></html>
-
